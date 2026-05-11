@@ -2,7 +2,7 @@
 Contributors: addonsorg
 Tags: Elementor Forms, File field, Elementor Forms upload, uploads, uploads field
 Requires at least: 2.0
-Stable tag: 1.5.6
+Stable tag: 1.5.7
 Tested up to: 6.9
 Requires PHP: 5.2
 License: GPLv2 or later
@@ -60,6 +60,10 @@ Whether you are collecting resumes, user-generated content, portfolio submission
 2. Backend elementor forms uploads
 
 == Changelog ==
+
+= 1.5.7 =
+- Fixed: After success submission, the file upload field is not reset
+
 = 1.5.6 =
 - Changed: move_uploaded_file to wp_handle_upload
 

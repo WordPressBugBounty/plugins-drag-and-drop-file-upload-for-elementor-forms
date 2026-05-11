@@ -807,7 +807,7 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 	}
 	function add_lib()
 	{
-		wp_enqueue_script("elementor_file_upload", SUPERADDONS_FILE_UPLOAD_PLUGIN_URL . "assets/js/drap_drop_file_upload.js", array("jquery"), "1.5.6", true);
+		wp_enqueue_script("elementor_file_upload", SUPERADDONS_FILE_UPLOAD_PLUGIN_URL . "assets/js/drap_drop_file_upload.js", array("jquery"), "1.5.8", true);
 		wp_localize_script('elementor_file_upload', 'elementor_file_upload', array('nonce' => wp_create_nonce('elementor_file_upload'), "url_plugin" => SUPERADDONS_FILE_UPLOAD_PLUGIN_URL, 'ajax_url' => admin_url('admin-ajax.php'), "upload_url" => $this->get_file_url(""), "text_maximum" => __("You can upload maximum:", "drag-and-drop-file-upload-for-elementor-forms")));
 		wp_enqueue_style("repeater_file_upload", SUPERADDONS_FILE_UPLOAD_PLUGIN_URL . "assets/css/drap_drop_file_upload.css", array(), "1.5.6");
 	}
