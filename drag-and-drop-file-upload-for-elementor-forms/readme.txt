@@ -3,7 +3,7 @@ Contributors: addonsorg
 Tags: Elementor Forms, File field, Elementor Forms upload, uploads, uploads field
 Requires at least: 2.0
 Stable tag: 1.5.7
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
