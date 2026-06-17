@@ -134,7 +134,8 @@
       status.setFileNameSize(file.name, file.size);
       status.setFileSize(file_type);
       const fileReader = new FileReader()
-      if (validImageTypes.includes(file_type)) {
+      var preview = obj.attr("data-preview");
+      if (preview === "yes" && validImageTypes.includes(file_type)) {
         fileReader.readAsDataURL(file);
         fileReader.onload = function () {
           const url = fileReader.result

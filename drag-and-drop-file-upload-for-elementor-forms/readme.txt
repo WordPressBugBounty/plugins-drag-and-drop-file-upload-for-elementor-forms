@@ -1,8 +1,7 @@
 === Drag and Drop File Upload for Elementor Forms ===
 Contributors: addonsorg
 Tags: Elementor Forms, File field, Elementor Forms upload, uploads, uploads field
-Requires at least: 2.0
-Stable tag: 1.5.7
+Stable tag: 1.6.0
 Tested up to: 7.0
 Requires PHP: 5.2
 License: GPLv2 or later
@@ -60,6 +59,8 @@ Whether you are collecting resumes, user-generated content, portfolio submission
 2. Backend elementor forms uploads
 
 == Changelog ==
+= 1.6.0 =
+- Fixed: Create a temporary upload directory and automatically delete its contents daily to prevent unnecessary files from accumulating on the server.
 
 = 1.5.7 =
 - Fixed: After success submission, the file upload field is not reset

@@ -18,6 +18,7 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 	public $fixed_files_indices = false;
 	public $field_uploads = array();
 	public $attachments_array = array();
+	public $custom_allowed_mimes = array();
 	public function get_type()
 	{
 		return 'file_upload';
@@ -306,7 +307,7 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 		$button_style .= 'border-style:solid !important; ';
 ?>
 		<div class="elementor-dragandrophandler-container">
-			<div class="elementor-dragandrophandler" data-type="<?php echo esc_attr($allowed_size) ?>" data-size="<?php echo esc_attr($size) ?>" data-max="<?php echo esc_attr($max) ?>">
+			<div class="elementor-dragandrophandler" data-type="<?php echo esc_attr($allowed_size) ?>" data-size="<?php echo esc_attr($size) ?>" data-max="<?php echo esc_attr($max) ?>" data-preview="<?php echo esc_attr( isset($item['file_upload_preview_img']) && $item['file_upload_preview_img'] == 'yes' ? 'yes' : 'no' ) ?>">
 				<div class="elementor-dragandrophandler-inner">
 					<div class="elementor-text-drop"><?php echo esc_html($text1) ?></div>
 					<div class="elementor-text-or"><?php echo esc_html($text2) ?></div>
@@ -427,6 +428,76 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 		$url = apply_filters('elementor_pro/forms/uploads/upload_url', $url, $file_name);
 		return $url;
 	}
+	private function get_temp_dir()
+	{
+		$wp_upload_dir = wp_upload_dir();
+		$path = $wp_upload_dir['basedir'] . '/elementor/forms/temp/';
+		return $path;
+	}
+	private function get_temp_file_url($file_name)
+	{
+		$wp_upload_dir = wp_upload_dir();
+		$url = $wp_upload_dir['baseurl'] . '/elementor/forms/temp/' . $file_name;
+		return $url;
+	}
+	private function get_ensure_temp_dir()
+	{
+		$path = $this->get_temp_dir();
+		if (file_exists($path . '/index.php')) {
+			return $path;
+		}
+		wp_mkdir_p($path);
+		$files = [
+			[
+				'file' => 'index.php',
+				'content' => [
+					'<?php',
+					'// Silence is golden.',
+				],
+			],
+			[
+				'file' => '.htaccess',
+				'content' => [
+					'Options -Indexes',
+					'<ifModule mod_headers.c>',
+					'	<Files *.*>',
+					'       Header set Content-Disposition attachment',
+					'	</Files>',
+					'</IfModule>',
+				],
+			],
+		];
+		foreach ($files as $file) {
+			if (! file_exists(trailingslashit($path) . $file['file'])) {
+				$content = implode(PHP_EOL, $file['content']);
+				@file_put_contents(trailingslashit($path) . $file['file'], $content);
+			}
+		}
+		return $path;
+	}
+	public function clean_temp_dir()
+	{
+		$temp_dir = $this->get_temp_dir();
+		if (!is_dir($temp_dir)) {
+			return;
+		}
+		$files = glob(trailingslashit($temp_dir) . '*');
+		if (empty($files)) {
+			return;
+		}
+		$now = time();
+		foreach ($files as $file) {
+			if (is_file($file)) {
+				$filename = basename($file);
+				if (in_array($filename, ['index.php', '.htaccess'])) {
+					continue;
+				}
+				if ($now - filemtime($file) > 86400) {
+					@wp_delete_file($file);
+				}
+			}
+		}
+	}
 	/**
 	 * This function returns the uploads folder after making sure
 	 * it is created and has protection files
@@ -516,39 +587,61 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 			}
 		}
 		if ($field["raw_value"] != "") {
-			$dir_upload = $this->get_upload_dir();
+			$temp_dir = $this->get_temp_dir();
+			$dir_upload = $this->get_ensure_upload_dir();
 			$files = explode("|", $field["raw_value"]);
+			$new_files = array();
 			$index = 0;
 			foreach ($files as $file) {
 				$file_datas = explode("/", $file);
-				$path = $dir_upload . end($file_datas);
+				$filename = end($file_datas);
+				$temp_path = $temp_dir . $filename;
+				$dest_path = $dir_upload . $filename;
+
+				// Move file from temp to final uploads folder if it exists in temp
+				global $wp_filesystem;
+				if (empty($wp_filesystem)) {
+					require_once ABSPATH . 'wp-admin/includes/file.php';
+					WP_Filesystem();
+				}
+				if ($wp_filesystem->exists($temp_path)) {
+					$wp_filesystem->move($temp_path, $dest_path, true);
+				}
+
+				$permanent_url = $this->get_file_url($filename);
+				$new_files[] = $permanent_url;
+
 				//upload to dopbox
 				if ($save_dropbox) {
-					Yeeaddons_EL_Dropbox_API::uppload_files($path);
+					Yeeaddons_EL_Dropbox_API::uppload_files($dest_path);
 				}
 				if ($save_media) {
-					$filetype = wp_check_filetype(basename($path), null);
+					$filetype = wp_check_filetype(basename($dest_path), null);
 					$attachment = array(
-						'guid'           => $file,
+						'guid'           => $permanent_url,
 						'post_mime_type' => $filetype['type'],
-						'post_title'     => preg_replace('/\.[^.]+$/', '', basename($path)),
+						'post_title'     => preg_replace('/\.[^.]+$/', '', basename($dest_path)),
 						'post_content'   => '',
 						'post_status'    => 'inherit'
 					);
-					$attach_id = wp_insert_attachment($attachment, $path);
-					//$attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
-					//wp_update_attachment_metadata( $attach_id, $attach_data );
+					$attach_id = wp_insert_attachment($attachment, $dest_path);
 				}
 				$record->add_file(
 					$id,
 					$index,
 					[
-						'path' => $path,
-						'url' => $file
+						'path' => $dest_path,
+						'url' => $permanent_url
 					]
 				);
 				$index++;
 			}
+
+			// Update the field value in the record to use the permanent URLs
+			$new_raw_value = implode("|", $new_files);
+			$fields = $record->get("fields");
+			$fields[$id]["value"] = $new_raw_value;
+			$record->set("fields", $fields);
 		}
 	}
 	public function remove_wp_mail_filter()
@@ -596,12 +689,18 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 		add_action('elementor_pro/forms/new_record', [$this, 'remove_wp_mail_filter'], 5);
 		add_action('elementor_pro/forms/process', array($this, 'send_data'), 11, 2);
 		add_action('elementor_pro/forms/mail_sent', array($this, "remove_files"), 10, 2);
+
+		// Register daily cron cleanup
+		if (! wp_next_scheduled('superaddons_clean_temp_dir_cron')) {
+			wp_schedule_event(time(), 'daily', 'superaddons_clean_temp_dir_cron');
+		}
+		add_action('superaddons_clean_temp_dir_cron', array($this, 'clean_temp_dir'));
 	}
 	function remove_files($settings, $record)
 	{
 		$attachments_mode_attach = $this->get_file_by_attachment_type_ok($settings['form_fields'], $record, "yes");
 		foreach ($attachments_mode_attach as $file) {
-			@unlink($file);
+			@wp_delete_file($file);
 		}
 	}
 	private function get_file_by_attachment_type_ok($form_fields, $record, $type)
@@ -633,7 +732,7 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 		if (in_array(strtolower($filename), $protected_files)) {
 			wp_send_json_error(array("status" => "error", "message" => "System files are protected."));
 		}
-		$upload_dir = $this->get_upload_dir();
+		$upload_dir = $this->get_temp_dir();
 		$file_path = trailingslashit($upload_dir) . $filename;
 		$real_file_path = realpath($file_path);
 		$real_upload_dir = realpath($upload_dir);
@@ -643,7 +742,7 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 			is_file($real_file_path) &&
 			strpos($real_file_path, $real_upload_dir) === 0
 		) {
-			if (@unlink($real_file_path)) {
+			if (@wp_delete_file($real_file_path)) {
 				wp_send_json(array("status" => "ok"));
 			} else {
 				wp_send_json(array("status" => "error", "message" => "Delete failed."));
@@ -652,6 +751,15 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 			wp_send_json(array("status" => "error", "message" => "Invalid file."));
 		}
 		wp_die();
+	}
+	private function get_custom_mime_types()
+	{
+		return [
+			'dcm'  => 'application/dicom',
+			'svg'  => 'image/svg+xml',
+			'svgz' => 'image/svg+xml',
+			'xml'  => 'application/xml',
+		];
 	}
 	private function is_file_type_valid($file_types, $file)
 	{
@@ -662,16 +770,27 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 		// Get the list of allowed MIME types from WordPress
 		$allowed_mimes = get_allowed_mime_types();
 		$custom_allowed_mimes = [];
+		$custom_mimes_map = $this->get_custom_mime_types();
+
 		// Build a custom allowed MIME type list based on the provided $file_types
 		$allowed_exts_input = array_map('trim', explode(',', strtolower($file_types)));
 		foreach ($allowed_exts_input as $ext) {
+			$found = false;
 			// Match each allowed extension with its MIME type from WordPress
 			foreach ($allowed_mimes as $mime_ext => $mime_type) {
 				if (strpos($mime_ext, $ext) !== false) {
 					$custom_allowed_mimes[$mime_ext] = $mime_type;
+					$found = true;
 				}
 			}
+			if (!$found) {
+				$mime_type = isset($custom_mimes_map[$ext]) ? $custom_mimes_map[$ext] : 'application/octet-stream';
+				$custom_allowed_mimes[$ext] = $mime_type;
+			}
 		}
+		// Save to class property so it can be passed to wp_handle_upload overrides
+		$this->custom_allowed_mimes = $custom_allowed_mimes;
+
 		// If no valid MIME types are found, reject the file for safety
 		if (empty($custom_allowed_mimes)) {
 			return false;
@@ -725,7 +844,7 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 			} else {
 				$type = '';
 			}
-			$uploads_dir = $this->get_ensure_upload_dir();
+			$uploads_dir = $this->get_ensure_temp_dir();
 			$name_of_file = sanitize_file_name($file["name"]);
 			$filename = uniqid() . "-" . $name_of_file;
 			$filename = wp_unique_filename($uploads_dir, $filename);
@@ -741,14 +860,18 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 				wp_send_json(array("status" => "not", "text" => esc_html__('This file exceeds the maximum allowed size.', 'drag-and-drop-file-upload-for-elementor-forms')));
 				die();
 			}
-			if (is_dir($uploads_dir) && is_writable($uploads_dir)) {
+			global $wp_filesystem;
+			if (empty($wp_filesystem)) {
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+				WP_Filesystem();
+			}
+			if ($wp_filesystem->is_dir($uploads_dir) && $wp_filesystem->is_writable($uploads_dir)) {
 				if (function_exists('Plugin::instance()->php_api->move_uploaded_file')) {
 					$move_new_file = Plugin::instance()->php_api->move_uploaded_file($file['tmp_name'], $new_file);
 					if (false !== $move_new_file) {
 						// Set correct file permissions.
-						$perms = 0644;
-						@chmod($new_file, $perms);
-						wp_send_json(array("status" => "ok", "text" => $this->get_file_url($filename)));
+						$wp_filesystem->chmod($new_file, 0644);
+						wp_send_json(array("status" => "ok", "text" => $this->get_temp_file_url($filename)));
 					} else {
 						wp_send_json(array("status" => "not", "text" => esc_html__('There was an error while trying to upload your file.', 'drag-and-drop-file-upload-for-elementor-forms')));
 					}
@@ -758,9 +881,10 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 					}
 					$upload_overrides = array(
 						'test_form' => false,
+						'mimes'     => $this->custom_allowed_mimes,
 					);
 					$yee_upload_dir_filter = function ($uploads) {
-						$custom_dir = '/elementor/forms/uploads';
+						$custom_dir = '/elementor/forms/temp';
 						$uploads['path']    = $uploads['basedir'] . $custom_dir;
 						$uploads['url']     = $uploads['baseurl'] . $custom_dir;
 						$uploads['subdir']  = $custom_dir;

@@ -6,10 +6,10 @@
  * Requires Plugins: elementor
  * Author: add-ons.org
  * Author URI: https://add-ons.org/
- * Version: 1.5.7
+ * Version: 1.6.0
  * Requires PHP: 5.2
- * Elementor tested up to: 4.0
- * Elementor pro tested up to: 4.0
+ * Elementor tested up to: 4.2
+ * Elementor pro tested up to: 4.2
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
 */
