@@ -6,7 +6,7 @@
  * Requires Plugins: elementor
  * Author: add-ons.org
  * Author URI: https://add-ons.org/
- * Version: 1.6.0
+ * Version: 1.6.1
  * Requires PHP: 5.2
  * Elementor tested up to: 4.2
  * Elementor pro tested up to: 4.2

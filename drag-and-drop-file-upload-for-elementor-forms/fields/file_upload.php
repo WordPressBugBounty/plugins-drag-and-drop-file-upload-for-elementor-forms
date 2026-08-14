@@ -464,14 +464,39 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 					'       Header set Content-Disposition attachment',
 					'	</Files>',
 					'</IfModule>',
+					'',
+					'# Deny PHP execution',
+					'<Files *.php>',
+					'deny from all',
+					'</Files>',
+					'<Files *.phtml>',
+					'deny from all',
+					'</Files>',
+					'<Files *.pht>',
+					'deny from all',
+					'</Files>',
+					'<Files *.phar>',
+					'deny from all',
+					'</Files>',
+					'<Files *.shtml>',
+					'deny from all',
+					'</Files>',
+					'<IfModule mod_php.c>',
+					'	php_flag engine off',
+					'</IfModule>',
+					'<IfModule mod_php7.c>',
+					'	php_flag engine off',
+					'</IfModule>',
+					'<IfModule mod_php8.c>',
+					'	php_flag engine off',
+					'</IfModule>',
 				],
 			],
 		];
 		foreach ($files as $file) {
-			if (! file_exists(trailingslashit($path) . $file['file'])) {
-				$content = implode(PHP_EOL, $file['content']);
-				@file_put_contents(trailingslashit($path) . $file['file'], $content);
-			}
+			// Always overwrite .htaccess to ensure latest security rules
+			$content = implode(PHP_EOL, $file['content']);
+			@file_put_contents(trailingslashit($path) . $file['file'], $content);
 		}
 		return $path;
 	}
@@ -527,14 +552,39 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 					'       Header set Content-Disposition attachment',
 					'	</Files>',
 					'</IfModule>',
+					'',
+					'# Deny PHP execution',
+					'<Files *.php>',
+					'deny from all',
+					'</Files>',
+					'<Files *.phtml>',
+					'deny from all',
+					'</Files>',
+					'<Files *.pht>',
+					'deny from all',
+					'</Files>',
+					'<Files *.phar>',
+					'deny from all',
+					'</Files>',
+					'<Files *.shtml>',
+					'deny from all',
+					'</Files>',
+					'<IfModule mod_php.c>',
+					'	php_flag engine off',
+					'</IfModule>',
+					'<IfModule mod_php7.c>',
+					'	php_flag engine off',
+					'</IfModule>',
+					'<IfModule mod_php8.c>',
+					'	php_flag engine off',
+					'</IfModule>',
 				],
 			],
 		];
 		foreach ($files as $file) {
-			if (! file_exists(trailingslashit($path) . $file['file'])) {
-				$content = implode(PHP_EOL, $file['content']);
-				@file_put_contents(trailingslashit($path) . $file['file'], $content);
-			}
+			// Always overwrite .htaccess to ensure latest security rules
+			$content = implode(PHP_EOL, $file['content']);
+			@file_put_contents(trailingslashit($path) . $file['file'], $content);
 		}
 		return $path;
 	}
@@ -767,6 +817,27 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 		if (empty($file_types)) {
 			$file_types = 'dcm,jpg,jpeg,png,gif,webp,pdf,doc,docx,ppt,pptx,odt,avi,ogg,m4a,mov,mp3,mp4,mpg,wav,wmv';
 		}
+
+		// SECURITY FIX: Get the blacklist early for pre-validation
+		$blacklist = $this->get_blacklist_file_ext();
+
+		// SECURITY FIX: Sanitize the filename the same way wp_handle_upload does,
+		// then check the SANITIZED extension against the blacklist.
+		// This prevents bypass via special characters (e.g., shell.php? -> shell.php)
+		$sanitized_name = sanitize_file_name($file['name']);
+		$sanitized_ext = strtolower(pathinfo($sanitized_name, PATHINFO_EXTENSION));
+
+		// Reject if the sanitized extension is blacklisted
+		if (in_array($sanitized_ext, $blacklist, true)) {
+			return false;
+		}
+
+		// SECURITY FIX: Also check the raw extension before sanitization
+		$raw_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+		if (in_array($raw_ext, $blacklist, true)) {
+			return false;
+		}
+
 		// Get the list of allowed MIME types from WordPress
 		$allowed_mimes = get_allowed_mime_types();
 		$custom_allowed_mimes = [];
@@ -774,18 +845,47 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 
 		// Build a custom allowed MIME type list based on the provided $file_types
 		$allowed_exts_input = array_map('trim', explode(',', strtolower($file_types)));
+
+		// SECURITY FIX: Validate that each extension contains only alphanumeric characters.
+		// This prevents attacker-controlled regex injection via the 'type' POST parameter
+		// (e.g., type=php[?]* which would create a regex key matching .php files).
+		$allowed_exts_input = array_filter($allowed_exts_input, function($ext) {
+			return preg_match('/^[a-z0-9]+$/', $ext);
+		});
+
+		if (empty($allowed_exts_input)) {
+			return false;
+		}
+
+		// SECURITY FIX: Reject if any requested extension is blacklisted.
+		// Do this BEFORE building the MIME map to prevent blacklisted extensions
+		// from ever entering the allowed MIME list.
+		foreach ($allowed_exts_input as $ext) {
+			if (in_array($ext, $blacklist, true)) {
+				return false;
+			}
+		}
+
 		foreach ($allowed_exts_input as $ext) {
 			$found = false;
 			// Match each allowed extension with its MIME type from WordPress
 			foreach ($allowed_mimes as $mime_ext => $mime_type) {
-				if (strpos($mime_ext, $ext) !== false) {
+				// SECURITY FIX: Use strict matching - check that the extension matches
+				// as a whole word in the pipe-delimited WordPress mime key (e.g. "jpg|jpeg|jpe")
+				$mime_exts = explode('|', $mime_ext);
+				if (in_array($ext, $mime_exts, true)) {
 					$custom_allowed_mimes[$mime_ext] = $mime_type;
 					$found = true;
 				}
 			}
 			if (!$found) {
-				$mime_type = isset($custom_mimes_map[$ext]) ? $custom_mimes_map[$ext] : 'application/octet-stream';
-				$custom_allowed_mimes[$ext] = $mime_type;
+				// SECURITY FIX: Only allow known custom MIME types from our explicit map.
+				// Never fall back to application/octet-stream for unknown types,
+				// as that allows arbitrary files to pass MIME validation.
+				if (isset($custom_mimes_map[$ext])) {
+					$custom_allowed_mimes[$ext] = $custom_mimes_map[$ext];
+				}
+				// Unknown extensions are silently skipped (not added to allowed list)
 			}
 		}
 		// Save to class property so it can be passed to wp_handle_upload overrides
@@ -796,23 +896,19 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 			return false;
 		}
 		// Extra check: prevent double extension attacks (e.g., file.jpg.php)
-		if (preg_match('/\.[a-z0-9]+\.([a-z0-9]+)$/i', $file['name'], $matches)) {
+		if (preg_match('/\.[a-z0-9]+\.([a-z0-9]+)$/i', $sanitized_name, $matches)) {
 			if (! in_array(strtolower($matches[1]), $allowed_exts_input, true)) {
 				return false;
 			}
 		}
 		// Validate the uploaded file using WordPress function with our custom MIME list
 		// This checks both the file extension and the actual file MIME type
-		$checked = wp_check_filetype_and_ext($file['tmp_name'], $file['name'], $custom_allowed_mimes);
+		$checked = wp_check_filetype_and_ext($file['tmp_name'], $sanitized_name, $custom_allowed_mimes);
 		// If either extension or MIME type is empty, the file is invalid or mismatched
 		if (empty($checked['ext']) || empty($checked['type'])) {
 			return false;
 		}
-		// Get the blacklist of disallowed file extensions for additional security (defense in depth)
-		$blacklist = $this->get_blacklist_file_ext();
-		// The file is valid if:
-		// 1. It passed wp_check_filetype_and_ext (both extension and MIME are valid)
-		// 2. The extension is not in the blacklist
+		// Final blacklist check on the resolved extension (defense in depth)
 		return ! in_array(strtolower($checked['ext']), $blacklist, true);
 	}
 	private function is_file_size_valid($file_sizes, $file)
