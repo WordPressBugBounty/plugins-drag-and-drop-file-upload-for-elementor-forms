@@ -191,6 +191,86 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 				'inner_tab' => 'form_fields_advanced_tab',
 				'tabs_wrapper' => 'form_fields_tabs',
 			],
+			'file_upload_err_file_type' => [
+				'name' => 'file_upload_err_file_type',
+				'label' => esc_html__('Error: File type not allowed', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'type' => Controls_Manager::TEXT,
+				'default' => 'This file type is not allowed.',
+				'ai' => [
+					'active' => false,
+				],
+				'condition' => [
+					'field_type' => $this->get_type(),
+				],
+				'description' => esc_html__('Custom error message when file type is not allowed.', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'tab' => 'content',
+				'inner_tab' => 'form_fields_advanced_tab',
+				'tabs_wrapper' => 'form_fields_tabs',
+			],
+			'file_upload_err_file_size' => [
+				'name' => 'file_upload_err_file_size',
+				'label' => esc_html__('Error: Max file size exceeded', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'type' => Controls_Manager::TEXT,
+				'default' => 'This file exceeds the maximum allowed size.',
+				'ai' => [
+					'active' => false,
+				],
+				'condition' => [
+					'field_type' => $this->get_type(),
+				],
+				'description' => esc_html__('Custom error message when file exceeds maximum allowed size.', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'tab' => 'content',
+				'inner_tab' => 'form_fields_advanced_tab',
+				'tabs_wrapper' => 'form_fields_tabs',
+			],
+			'file_upload_err_upload' => [
+				'name' => 'file_upload_err_upload',
+				'label' => esc_html__('Error: Upload failed', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'type' => Controls_Manager::TEXT,
+				'default' => 'There was an error while trying to upload your file.',
+				'ai' => [
+					'active' => false,
+				],
+				'condition' => [
+					'field_type' => $this->get_type(),
+				],
+				'description' => esc_html__('Custom error message when file upload fails.', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'tab' => 'content',
+				'inner_tab' => 'form_fields_advanced_tab',
+				'tabs_wrapper' => 'form_fields_tabs',
+			],
+			'file_upload_err_dir' => [
+				'name' => 'file_upload_err_dir',
+				'label' => esc_html__('Error: Upload directory not writable', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'type' => Controls_Manager::TEXT,
+				'default' => 'Upload directory is not writable or does not exist.',
+				'ai' => [
+					'active' => false,
+				],
+				'condition' => [
+					'field_type' => $this->get_type(),
+				],
+				'description' => esc_html__('Custom error message when upload directory cannot be written.', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'tab' => 'content',
+				'inner_tab' => 'form_fields_advanced_tab',
+				'tabs_wrapper' => 'form_fields_tabs',
+			],
+			'file_upload_text_max' => [
+				'name' => 'file_upload_text_max',
+				'label' => esc_html__('Text: Maximum upload files alert', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'type' => Controls_Manager::TEXT,
+				'default' => 'You can upload maximum:',
+				'ai' => [
+					'active' => false,
+				],
+				'condition' => [
+					'field_type' => $this->get_type(),
+				],
+				'description' => esc_html__('Custom alert text when user uploads more files than allowed.', 'drag-and-drop-file-upload-for-elementor-forms'),
+				'tab' => 'content',
+				'inner_tab' => 'form_fields_advanced_tab',
+				'tabs_wrapper' => 'form_fields_tabs',
+			],
 			'button_padding' => [
 				'name' => 'button_padding',
 				'label' => esc_html__('Button Padding', 'drag-and-drop-file-upload-for-elementor-forms'),
@@ -292,6 +372,11 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 		$text1 = $item['file_upload_text1'];
 		$text2 = $item['file_upload_text2'];
 		$text3 = $item['file_upload_text3'];
+		$err_file_type = !empty($item['file_upload_err_file_type']) ? $item['file_upload_err_file_type'] : esc_html__('This file type is not allowed.', 'drag-and-drop-file-upload-for-elementor-forms');
+		$err_file_size = !empty($item['file_upload_err_file_size']) ? $item['file_upload_err_file_size'] : esc_html__('This file exceeds the maximum allowed size.', 'drag-and-drop-file-upload-for-elementor-forms');
+		$err_upload = !empty($item['file_upload_err_upload']) ? $item['file_upload_err_upload'] : esc_html__('There was an error while trying to upload your file.', 'drag-and-drop-file-upload-for-elementor-forms');
+		$err_dir = !empty($item['file_upload_err_dir']) ? $item['file_upload_err_dir'] : esc_html__('Upload directory is not writable or does not exist.', 'drag-and-drop-file-upload-for-elementor-forms');
+		$text_max = !empty($item['file_upload_text_max']) ? $item['file_upload_text_max'] : __('You can upload maximum:', 'drag-and-drop-file-upload-for-elementor-forms');
 		$button_padding = (isset($item['button_padding']) ? $item['button_padding'] : array("unit" => "px", "top" => 10, "right" => 24, "bottom" => 10, "left" => 24));
 		$button_background = (isset($item['button_background']) ? $item['button_background'] : "#6381E6");
 		$button_color = (isset($item['button_color']) ? $item['button_color'] : "#ffffff");
@@ -307,7 +392,7 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 		$button_style .= 'border-style:solid !important; ';
 ?>
 		<div class="elementor-dragandrophandler-container">
-			<div class="elementor-dragandrophandler" data-type="<?php echo esc_attr($allowed_size) ?>" data-size="<?php echo esc_attr($size) ?>" data-max="<?php echo esc_attr($max) ?>" data-preview="<?php echo esc_attr( isset($item['file_upload_preview_img']) && $item['file_upload_preview_img'] == 'yes' ? 'yes' : 'no' ) ?>">
+			<div class="elementor-dragandrophandler" data-type="<?php echo esc_attr($allowed_size) ?>" data-size="<?php echo esc_attr($size) ?>" data-max="<?php echo esc_attr($max) ?>" data-preview="<?php echo esc_attr( isset($item['file_upload_preview_img']) && $item['file_upload_preview_img'] == 'yes' ? 'yes' : 'no' ) ?>" data-err-file-type="<?php echo esc_attr($err_file_type); ?>" data-err-file-size="<?php echo esc_attr($err_file_size); ?>" data-err-upload="<?php echo esc_attr($err_upload); ?>" data-err-dir="<?php echo esc_attr($err_dir); ?>" data-text-max="<?php echo esc_attr($text_max); ?>">
 				<div class="elementor-dragandrophandler-inner">
 					<div class="elementor-text-drop"><?php echo esc_html($text1) ?></div>
 					<div class="elementor-text-or"><?php echo esc_html($text2) ?></div>
@@ -771,16 +856,16 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 	{
 		$nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
 		if (!wp_verify_nonce($nonce, 'elementor_file_upload')) {
-			wp_send_json_error(array("status" => "error", "message" => "Security check failed."));
+			wp_send_json_error(array("status" => "error", "message" => esc_html__("Security check failed.", "drag-and-drop-file-upload-for-elementor-forms")));
 		}
 		$name = isset($_POST["name"]) ? sanitize_text_field(wp_unslash($_POST["name"])) : '';
 		if (empty($name)) {
-			wp_send_json_error(array("status" => "error", "message" => "No file name."));
+			wp_send_json_error(array("status" => "error", "message" => esc_html__("No file name.", "drag-and-drop-file-upload-for-elementor-forms")));
 		}
 		$filename = basename(sanitize_file_name($name));
 		$protected_files = array('.htaccess', 'index.php', 'index.html', 'php.ini', 'web.config');
 		if (in_array(strtolower($filename), $protected_files)) {
-			wp_send_json_error(array("status" => "error", "message" => "System files are protected."));
+			wp_send_json_error(array("status" => "error", "message" => esc_html__("System files are protected.", "drag-and-drop-file-upload-for-elementor-forms")));
 		}
 		$upload_dir = $this->get_temp_dir();
 		$file_path = trailingslashit($upload_dir) . $filename;
@@ -795,10 +880,10 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 			if (@wp_delete_file($real_file_path)) {
 				wp_send_json(array("status" => "ok"));
 			} else {
-				wp_send_json(array("status" => "error", "message" => "Delete failed."));
+				wp_send_json(array("status" => "error", "message" => esc_html__("Delete failed.", "drag-and-drop-file-upload-for-elementor-forms")));
 			}
 		} else {
-			wp_send_json(array("status" => "error", "message" => "Invalid file."));
+			wp_send_json(array("status" => "error", "message" => esc_html__("Invalid file.", "drag-and-drop-file-upload-for-elementor-forms")));
 		}
 		wp_die();
 	}
@@ -948,12 +1033,14 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 			$new_file = trailingslashit($uploads_dir) . $filename;
 			// valid file type?
 			if (!$this->is_file_type_valid($type, $file)) {
-				wp_send_json(array("status" => "not", "text" => esc_html__('This file type is not allowed.', 'drag-and-drop-file-upload-for-elementor-forms')));
+				$msg = !empty($_REQUEST['err_file_type']) ? sanitize_text_field(wp_unslash($_REQUEST['err_file_type'])) : esc_html__('This file type is not allowed.', 'drag-and-drop-file-upload-for-elementor-forms');
+				wp_send_json(array("status" => "not", "text" => $msg));
 				die();
 			}
 			// allowed file size?
 			if (! $this->is_file_size_valid($size, $file)) {
-				wp_send_json(array("status" => "not", "text" => esc_html__('This file exceeds the maximum allowed size.', 'drag-and-drop-file-upload-for-elementor-forms')));
+				$msg = !empty($_REQUEST['err_file_size']) ? sanitize_text_field(wp_unslash($_REQUEST['err_file_size'])) : esc_html__('This file exceeds the maximum allowed size.', 'drag-and-drop-file-upload-for-elementor-forms');
+				wp_send_json(array("status" => "not", "text" => $msg));
 				die();
 			}
 			global $wp_filesystem;
@@ -969,7 +1056,8 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 						$wp_filesystem->chmod($new_file, 0644);
 						wp_send_json(array("status" => "ok", "text" => $this->get_temp_file_url($filename)));
 					} else {
-						wp_send_json(array("status" => "not", "text" => esc_html__('There was an error while trying to upload your file.', 'drag-and-drop-file-upload-for-elementor-forms')));
+						$msg = !empty($_REQUEST['err_upload']) ? sanitize_text_field(wp_unslash($_REQUEST['err_upload'])) : esc_html__('There was an error while trying to upload your file.', 'drag-and-drop-file-upload-for-elementor-forms');
+						wp_send_json(array("status" => "not", "text" => $msg));
 					}
 				} else {
 					if (! function_exists('wp_handle_upload')) {
@@ -1002,7 +1090,8 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 					}
 				}
 			} else {
-				wp_send_json(array("status" => "not", "text" => esc_html__('Upload directory is not writable or does not exist.', 'drag-and-drop-file-upload-for-elementor-forms')));
+				$msg = !empty($_REQUEST['err_dir']) ? sanitize_text_field(wp_unslash($_REQUEST['err_dir'])) : esc_html__('Upload directory is not writable or does not exist.', 'drag-and-drop-file-upload-for-elementor-forms');
+				wp_send_json(array("status" => "not", "text" => $msg));
 			}
 		}
 	}
@@ -1028,7 +1117,15 @@ class Superaddons_EL_File_Uploads extends \ElementorPro\Modules\Forms\Fields\Fie
 	function add_lib()
 	{
 		wp_enqueue_script("elementor_file_upload", SUPERADDONS_FILE_UPLOAD_PLUGIN_URL . "assets/js/drap_drop_file_upload.js", array("jquery"), "1.5.8", true);
-		wp_localize_script('elementor_file_upload', 'elementor_file_upload', array('nonce' => wp_create_nonce('elementor_file_upload'), "url_plugin" => SUPERADDONS_FILE_UPLOAD_PLUGIN_URL, 'ajax_url' => admin_url('admin-ajax.php'), "upload_url" => $this->get_file_url(""), "text_maximum" => __("You can upload maximum:", "drag-and-drop-file-upload-for-elementor-forms")));
+		wp_localize_script('elementor_file_upload', 'elementor_file_upload', array(
+			'nonce' => wp_create_nonce('elementor_file_upload'),
+			"url_plugin" => SUPERADDONS_FILE_UPLOAD_PLUGIN_URL,
+			'ajax_url' => admin_url('admin-ajax.php'),
+			"upload_url" => $this->get_file_url(""),
+			"text_maximum" => __("You can upload maximum:", "drag-and-drop-file-upload-for-elementor-forms"),
+			"text_error" => __("Error:", "drag-and-drop-file-upload-for-elementor-forms"),
+			"text_server_error" => __("Server file type is not allowed.", "drag-and-drop-file-upload-for-elementor-forms")
+		));
 		wp_enqueue_style("repeater_file_upload", SUPERADDONS_FILE_UPLOAD_PLUGIN_URL . "assets/css/drap_drop_file_upload.css", array(), "1.5.6");
 	}
 	function add_lib_admin()

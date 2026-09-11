@@ -45,14 +45,14 @@
             obj.closest('.elementor-field-type-file_upload').find(".elementor-upload-field-drap_drop").val(name);
           } else {
             if (!data.text) {
-              status.text("Error:");
+              status.text(elementor_file_upload.text_error || "Error:");
             } else {
               status.text(data.text);
             }
           }
         },
         error: function (request, status, error) {
-          status.text("Server file type is not allowed.");
+          status.text(elementor_file_upload.text_server_error || "Server file type is not allowed.");
         }
       });
       status.setAbort(jqXHR);
@@ -128,6 +128,18 @@
       fd.append('nonce', elementor_file_upload.nonce);
       fd.append('type_upload', obj.closest('.wpcf7').find(".elementor-droptype").val());
       fd.append('action', "elementor_file_upload");
+      if (obj.attr('data-err-file-type')) {
+        fd.append('err_file_type', obj.attr('data-err-file-type'));
+      }
+      if (obj.attr('data-err-file-size')) {
+        fd.append('err_file_size', obj.attr('data-err-file-size'));
+      }
+      if (obj.attr('data-err-upload')) {
+        fd.append('err_upload', obj.attr('data-err-upload'));
+      }
+      if (obj.attr('data-err-dir')) {
+        fd.append('err_dir', obj.attr('data-err-dir'));
+      }
       var status = new cf7_createStatusbar(obj); //Using this we can set progress.
       var file_type = file.name.split('.');
       file_type = file_type.slice(-1).pop()
@@ -156,7 +168,8 @@
       }
       var max_limit = max - count + 1;
       if (max != 0 && parseInt(files.length) >= max_limit) {
-        alert(elementor_file_upload.text_maximum + " " + max);
+        var text_maximum = obj.attr("data-text-max") || elementor_file_upload.text_maximum;
+        alert(text_maximum + " " + max);
       } else {
         for (var i = 0; i < files.length; i++) {
           setTimeout(upload_file(files[i], obj), 500);

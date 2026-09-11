@@ -1,7 +1,7 @@
 === Drag and Drop File Upload for Elementor Forms ===
 Contributors: addonsorg
 Tags: Elementor Forms, File field, Elementor Forms upload, uploads, uploads field
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 Tested up to: 7.1
 Requires PHP: 5.2
 License: GPLv2 or later

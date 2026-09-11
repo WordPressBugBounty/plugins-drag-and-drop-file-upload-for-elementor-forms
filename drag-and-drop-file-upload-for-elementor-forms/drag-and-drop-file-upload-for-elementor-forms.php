@@ -6,14 +6,15 @@
  * Requires Plugins: elementor
  * Author: add-ons.org
  * Author URI: https://add-ons.org/
- * Version: 1.6.1
+ * Version: 1.6.2
  * Requires PHP: 5.2
  * Elementor tested up to: 4.2
  * Elementor pro tested up to: 4.2
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
-*/
-if (! defined('ABSPATH')) exit; // Exit if accessed directly
+ */
+if (!defined('ABSPATH'))
+    exit; // Exit if accessed directly
 if (!defined('SUPERADDONS_FILE_UPLOAD_PLUGIN_PATH')) {
     define('SUPERADDONS_FILE_UPLOAD_PLUGIN_PATH', plugin_dir_path(__FILE__));
     define('SUPERADDONS_FILE_UPLOAD_PLUGIN_URL', plugin_dir_url(__FILE__));
