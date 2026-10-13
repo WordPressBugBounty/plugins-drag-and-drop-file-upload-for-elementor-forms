@@ -203,7 +203,7 @@ if (!class_exists('Yeekit_Document_Addons')) {
         function add_menu()
         {
             add_submenu_page("wpcf7", "contact-form-7 addons", "<span style='color:#f18500'>Add-ons </span><span class='update-plugins count-1'><span class='plugin-count'>36</span></span>", "manage_options", "contact-form-7-addons", array($this, 'page_addons_cf7'), 999);
-            add_submenu_page("elementor", "elementor form addons", "<span style='color:#f18500'>Forms Add-ons </span><span class='update-plugins count-1'><span class='plugin-count'>15</span></span>", "manage_options", "elementor-forms-addons", array($this, 'page_addons_elementor'), 999);
+            add_submenu_page("elementor", "Elementor Form ddons", "Forms Add-ons", "manage_options", "elementor-forms-addons", array($this, 'page_addons_elementor'), 999);
             add_submenu_page("fluent_forms", "addons", "<span style='color:#f18500'>Add-ons </span><span class='update-plugins count-1'><span class='plugin-count'>36</span></span>", "manage_options", "fluent_forms-addons", array($this, 'page_addons_fluent_forms'));
             add_submenu_page("formidable", "addons", "<span style='color:#f18500'>Add-ons </span><span class='update-plugins count-1'><span class='plugin-count'>36</span></span>", "manage_options", "formidable-addons", array($this, 'page_addons_formidable'), 999);
             add_submenu_page("quform.dashboard", "addons", "<span style='color:#f18500'>Add-ons </span><span class='update-plugins count-1'><span class='plugin-count'>36</span></span>", "manage_options", "quform.dashboard-addons", array($this, 'page_addons_quform'), 999);
@@ -296,9 +296,9 @@ if (!class_exists('Yeekit_Document_Addons')) {
                             "authorurl" => "https://add-ons.org",
                             "class" => "",
                             "star" => 5,
-                            "starnum" => rand(10, 100),
-                            "downloaded" => rand(100, 1000),
-                            "version" => "2." . rand(10, 100),
+                            "starnum" => wp_rand(10, 100),
+                            "downloaded" => wp_rand(100, 1000),
+                            "version" => "2." . wp_rand(10, 100),
                             "compatible" => "4.0",
                             "date" => gmdate("Y-m-d h:i:sa")
                         );
@@ -460,6 +460,9 @@ if (!class_exists('Yeekit_Document_Addons')) {
                 $yeekit_addons = get_transient("yeekit_addons_" . $add_on);
                 if ($yeekit_addons === false) {
                     $rs = wp_remote_get("https://cdn.add-ons.org/plugins.php?type=" . $add_on);
+                    if (is_wp_error($rs)) {
+                        return array();
+                    }
                     $data = $rs['body'];
                     set_transient("yeekit_addons_" . $add_on, $data, 86400);
                     return json_decode($data, true);
@@ -470,6 +473,9 @@ if (!class_exists('Yeekit_Document_Addons')) {
                 $yeekit_addons = get_transient("yeekit_addons");
                 if ($yeekit_addons === false) {
                     $rs = wp_remote_get("https://cdn.add-ons.org/plugins.php");
+                    if (is_wp_error($rs)) {
+                        return array();
+                    }
                     $data = $rs['body'];
                     set_transient("yeekit_addons", $data,  86400);
                     return json_decode($data, true);
